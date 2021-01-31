@@ -1,7 +1,5 @@
 import numpy as np
 
-INFINITE=9.e999
-NB_LIGHT=3 # from center to edge
 YELLOW=560.e-9# 560 nanometers
 
 #################################################################################################
@@ -30,7 +28,6 @@ class Device:
                 s.receive(l)
             iq.add(l)
 
-        # compute Image Quality
         return iq
 
 #################################################################################################
@@ -49,67 +46,63 @@ class Light:
         self.valid=np.ones(nb_total)
         self.wavelenght=np.ones(nb_total)*YELLOW
         self.index=np.ones(nb_total)
+    
+    def remove_bad_photons(self):
+        pass
 
 #################################################################################################
 class Surface:
-   
-    def __init__(self):#,surf_type,rcurv,diameter):
+    def __init__(self):
         pass
-        # self.type=surf_type
-        # self.rcurv=rcurv
-        # self.diameter=diameter
 
     def receive(self,light):
         pass
-    
-        # if self.type=="stop" :
-        #     self.stop(light)
-
-        # if self.type=="reflect" :
-        #     self.reflect(light)
-
-        # if self.type=="transmit" :
-        #     self.transmit(light)
 
     def stop(self,light):
-        pass
-
-    def reflect(self,light):
-        self.stop(light)
-       # nrm=self.compute_normals(light)
-        pass
-
-    def transmit(self,light):
-        self.stop(light)
-        #nrm=self.compute_normals(light)
         pass
 
     def compute_normals(self,light):
         pass
 
-
 class Ticks(Surface):
     def __init__(self,ticks):
         self.ticks=ticks
+    
+    def receive(self,light):
+        light.x=light.x+self.ticks
 
 class Reflect(Surface):
-    def __init__(self,diameter=-1.):
+    def __init__(self,diameter=-1.,rc=-1.):
         self.diameter=diameter
-        pass
+        self.rc=rc
+
+    def receive(self,light):
+        self.stop(light)
+        light.remove_bad_photons()
+        n=self.compute_normals(light)
+        #todo reflect using n
 
 class Image(Surface):
     def __init__(self):
         pass
 
+    def receive(self,light):
+        self.stop(light)
+        light.remove_bad_photons()
+
 #################################################################################################
 class ImageQuality:
     def __init__(self):
         self.lights=[]
-        pass
+        self.must_compute=True
 
     def add(self,l):
         self.lights.append(l)
+        self.must_compute=True
 
- 
-
+    def compute(self):
+        if self.must_compute==False:
+            return
+        #todo
+        self.must_compute=False
 #################################################################################################
