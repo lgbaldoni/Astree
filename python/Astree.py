@@ -26,6 +26,7 @@ class Device:
             l=Light(self.surfaces[0].diameter,tilt)
             for s in self.surfaces:
                 s.receive(l)
+                l.remove_bad_photons()
             iq.add(l)
 
         return iq
@@ -33,22 +34,33 @@ class Device:
 #################################################################################################
 class Light:
     def __init__(self,diameter,tilt, nb_photons=31):
-        nb_total=nb_photons*nb_photons
+        self.nb_photons=nb_photons*nb_photons
         self.tilt=tilt # todo
-        self.dx=np.zeros(nb_total)
-        self.dy=np.zeros(nb_total)
-        self.dz=np.ones(nb_total)
+        self.dx=np.zeros(self.nb_photons)
+        self.dy=np.zeros(self.nb_photons)
+        self.dz=np.ones(self.nb_photons)
         
         xd=np.linspace(-diameter,diameter,nb_photons)
         yd=np.linspace(-diameter,diameter,nb_photons)
         self.x,self.y=np.meshgrid(xd,yd)
-        self.z=np.zeros(nb_total)
-        self.valid=np.ones(nb_total)
-        self.wavelenght=np.ones(nb_total)*YELLOW
-        self.index=np.ones(nb_total)
+        self.x=np.reshape(self.x,self.nb_photons)
+        self.y=np.reshape(self.y,self.nb_photons)
+        self.z=np.zeros(self.nb_photons)
+        self.valid=np.ones(self.nb_photons)
+        self.wavelength=np.ones(self.nb_photons)*YELLOW
+        self.index=np.ones(self.nb_photons)
     
     def remove_bad_photons(self):
-        pass
+        to_delete = (self.valid ==0)
+        self.dx=np.delete(self.dx,to_delete,axis=0)
+        self.dy=np.delete(self.dy,to_delete,axis=0)
+        self.dz=np.delete(self.dz,to_delete,axis=0)
+        self.x=np.delete(self.x,to_delete,axis=0)
+        self.y=np.delete(self.y,to_delete,axis=0)
+        self.z=np.delete(self.z,to_delete,axis=0)
+        self.wavelength=np.delete(self.wavelength,to_delete,axis=0)
+        self.index=np.delete(self.index,to_delete,axis=0)
+        self.valid=np.delete(self.valid,to_delete,axis=0)
 
 #################################################################################################
 class Surface:
@@ -81,6 +93,14 @@ class Reflect(Surface):
         light.remove_bad_photons()
         n=self.compute_normals(light)
         #todo reflect using n
+
+class Stop(Surface):
+    def __init__(self,diameter=-1.):
+        self.diameter=diameter
+
+    def receive(self,light):
+        self.stop(light)
+        light.remove_bad_photons()
 
 class Image(Surface):
     def __init__(self):
