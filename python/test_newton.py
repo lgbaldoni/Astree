@@ -1,9 +1,12 @@
-import Astree as astree
+from Astree import *
 
-d=astree.Device()
+d=Device()
 d.set_field_of_view(1.)
 
-d.add_surface('reflect',1200,2400,200)
-d.add_surface('image')
+d.add_surface(Reflect())
+d.add_surface(Ticks(1200.))
+d.add_surface(Image())
 
-print(d.lf())
+iq=d.compute()
+
+print(iq)

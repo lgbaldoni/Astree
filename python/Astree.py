@@ -5,49 +5,39 @@ NB_LIGHT=3 # from center to edge
 YELLOW=560.e-9# 560 nanometers
 
 #################################################################################################
-
 class Device:
-    surfaces=[]
-    fov=0.
-    must_recompute=True
-    iq=None
+    def __init__(self):
+        self.surfaces=[]
+        self.fov=0.
+        self.must_recompute=True
 
-    def add_surface(self,surf_type,ticks=0,rcurv=INFINITE,diameter=INFINITE,conic=0.):
-        s=Surface(surf_type,rcurv,diameter)
+    def add_surface(self,s):
         self.surfaces.append(s)
         self.must_recompute=True
 
-    def set_field_of_view(self,fov):
+    def set_field_of_view(self,fov,nb_angles=3):
         self.fov=fov
+        self.nb_angles=nb_angles
         self.must_recompute=True
 
-    def image_quality(self):
-        if self.must_recompute:
-            self.compute_quality()
-            self.must_recompute=False
-        return self.iq
+    def compute(self):
 
-    def compute_quality(self):
-        if len(self.surfaces)==0:
-            self.lf=-1
-            return
+        iq=ImageQuality()
 
-        l=Light(self.surfaces[0].diameter)
+        for tilt in np.linspace(0,self.fov/2.,self.nb_angles):
+            l=Light(self.surfaces[0].diameter,tilt)
+            for s in self.surfaces:
+                s.receive(l)
+            iq.add(l)
 
-        for s in self.surfaces:
-            s.receive(l)
-
-        self.lf=l.lf()
-
-    def lf(self):
-        self.compute_quality()
-        return self.lf
-
+        # compute Image Quality
+        return iq
 
 #################################################################################################
 class Light:
-    def __init__(self,diameter, nb_photons=31): # no tilt for now
+    def __init__(self,diameter,tilt, nb_photons=31):
         nb_total=nb_photons*nb_photons
+        self.tilt=tilt # todo
         self.dx=np.zeros(nb_total)
         self.dy=np.zeros(nb_total)
         self.dz=np.ones(nb_total)
@@ -60,48 +50,66 @@ class Light:
         self.wavelenght=np.ones(nb_total)*YELLOW
         self.index=np.ones(nb_total)
 
-    def lf(self):
-        return -1.
 #################################################################################################
-
 class Surface:
-    type="stop"
-    
-    def __init__(self,surf_type,rcurv,diameter):
-        self.type=surf_type
-        self.rcurv=rcurv
-        self.diameter=diameter
+   
+    def __init__(self):#,surf_type,rcurv,diameter):
+        pass
+        # self.type=surf_type
+        # self.rcurv=rcurv
+        # self.diameter=diameter
 
     def receive(self,light):
-        if self.type=="stop" :
-            self.stop(light)
+        pass
+    
+        # if self.type=="stop" :
+        #     self.stop(light)
 
-        if self.type=="reflect" :
-            self.reflect(light)
+        # if self.type=="reflect" :
+        #     self.reflect(light)
 
-        if self.type=="transmit" :
-            self.transmit(light)
+        # if self.type=="transmit" :
+        #     self.transmit(light)
 
     def stop(self,light):
         pass
 
     def reflect(self,light):
         self.stop(light)
-        nrm=self.compute_normals(light)
+       # nrm=self.compute_normals(light)
         pass
 
     def transmit(self,light):
         self.stop(light)
-        nrm=self.compute_normals(light)
+        #nrm=self.compute_normals(light)
         pass
 
     def compute_normals(self,light):
         pass
 
 
+class Ticks(Surface):
+    def __init__(self,ticks):
+        self.ticks=ticks
+
+class Reflect(Surface):
+    def __init__(self,diameter=-1.):
+        self.diameter=diameter
+        pass
+
+class Image(Surface):
+    def __init__(self):
+        pass
+
 #################################################################################################
 class ImageQuality:
-    maxlfro=INFINITE
-    pass
+    def __init__(self):
+        self.lights=[]
+        pass
+
+    def add(self,l):
+        self.lights.append(l)
+
+ 
 
 #################################################################################################
